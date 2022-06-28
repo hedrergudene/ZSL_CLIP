@@ -1,0 +1,16 @@
+{
+    "output_dir":"output/freeze_pretraining_checkpoints",
+    "learning_rate":5e-4,
+    "weight_decay":1e-2,
+    "batch_size":256,
+    "epochs":1,
+    "dataloader_num_workers":4,
+    "gradient_accumulation_steps":1,
+    "warmup_steps_factor":1,
+    "early_stopping":1,
+    "device":"cuda",
+    "fp16":1,
+    "num_workers_dataloader":4,
+    "scheduler_mode":"min",
+    "seed":123
+}

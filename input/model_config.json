@@ -1,0 +1,7 @@
+{
+    "vision_backbone":"microsoft/swin-tiny-patch4-window7-224",
+    "text_backbone":"distilroberta-base",
+    "max_length_corpus":-1,
+    "dim":256,
+    "dropout":0.25
+}
