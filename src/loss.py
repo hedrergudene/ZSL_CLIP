@@ -105,7 +105,7 @@ class CLIPLoss(torch.nn.Module):
     Implementation of CLIP model minimisation function
     """
     def __init__(self,
-                temperature:float=.05,
+                temperature:float=1,
                 )->None:
         """
         Args:
