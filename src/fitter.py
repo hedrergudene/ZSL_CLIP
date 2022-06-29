@@ -6,7 +6,6 @@
 import json
 from transformers import Trainer
 import torch
-from src.loss import CLIPLoss
 from datetime import datetime
 import time
 import numpy as np
@@ -23,10 +22,12 @@ import os
 class CustomTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         # forward pass
-        outputs = model(**inputs)
-        # loss
-        loss = CLIPLoss()(outputs)
-        return (loss['summary'], outputs) if return_outputs else loss['summary']
+        logits_per_text = model(**inputs)
+        # Get loss
+        text_loss = torch.nn.functional.cross_entropy(logits_per_text, torch.arange(len(logits_per_text), device=logits_per_text.device))
+        vision_loss = torch.nn.functional.cross_entropy(logits_per_text.T, torch.arange(len(logits_per_text), device=logits_per_text.device))
+        # Return average
+        return .5*(text_loss+vision_loss)
 
 
 #
