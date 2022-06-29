@@ -5,21 +5,6 @@ from transformers import AutoConfig, AutoModel
 
 # Utils
 
-# adapted from https://github.com/NVIDIA/DeepLearningExamples/blob/master/PyTorch/LanguageModeling/BERT/modeling.py#L317
-class LayerNorm_Custom(torch.nn.Module):
-    def __init__(self, dim, eps=1e-6, device:str='cuda:0'):
-        super().__init__()
-        self.weight = torch.nn.Parameter(torch.ones(dim)).to(device)
-        self.bias = torch.nn.Parameter(torch.zeros(dim)).to(device)
-        self.variance_epsilon = eps
-
-    def forward(self, x):
-        u = x.mean(-1, keepdim=True)
-        s = (x - u).pow(2).mean(-1, keepdim=True)
-        x = (x - u) / torch.sqrt(s + self.variance_epsilon)
-        x = self.weight * x + self.bias
-        return x
-
 
 ## Linear Block & normalisation
 class ProjectionHead(torch.nn.Module):
@@ -34,16 +19,10 @@ class ProjectionHead(torch.nn.Module):
         self.projection = torch.nn.Sequential(torch.nn.Dropout(dropout),
                                               torch.nn.Linear(input_dim, output_dim, device=device),
                                         )
-        self.block = torch.nn.Sequential(torch.nn.GELU(),
-                                         torch.nn.Linear(output_dim, output_dim, device=device),
-                                         torch.nn.Dropout(dropout),
-                                     )
-        self.LN = LayerNorm_Custom(dim=output_dim, device=device)
 
     def forward(self, x):
-        proj_emb = self.projection(x)
-        x = self.block(proj_emb) + proj_emb
-        return self.LN(x)
+        x = self.projection(x)
+        return x/x.norm(p=2, dim=-1, keepdim=True)
 
 
 # Model
@@ -96,10 +75,13 @@ class CLIPModel(torch.nn.Module):
         # Standardise shape and values
         text_embeddings = self.nlp_linear(nlp_feats)
         vision_embeddings = self.vision_linear(vision_feats)
-        # Output
-        return {'text_emb':text_embeddings, 'vision_emb':vision_embeddings}
+        # Get logits
+        logits_per_text = text_embeddings @ vision_embeddings.T
+        # Output (we only return text ones, since vision logits are the transpose
+        return logits_per_text
+   
 
-
+   
     def _disentangle_nlp_transformer(self,
                                      input_ids:torch.Tensor,
                                      attention_mask:torch.Tensor,
