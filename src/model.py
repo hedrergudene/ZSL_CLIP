@@ -16,13 +16,20 @@ class ProjectionHead(torch.nn.Module):
                  ):
         super(ProjectionHead, self).__init__()
         # Parameters
-        self.projection = torch.nn.Sequential(torch.nn.Dropout(dropout),
-                                              torch.nn.Linear(input_dim, output_dim, device=device),
-                                        )
+        self.projection = torch.nn.Sequential(
+            torch.nn.Linear(input_dim, output_dim, bias=False, device=device),
+           )
+        self.block = torch.nn.Sequential(
+            torch.nn.Linear(output_dim, output_dim, bias=False, device=device),
+            torch.nn.Dropout(dropout),
+           )
+        self.LN = torch.nn.LayerNorm(output_dim)
 
     def forward(self, x):
-        x = self.projection(x)
-        return x/x.norm(p=2, dim=-1, keepdim=True)
+        proj = self.projection(x)
+        output = proj + self.block(torch.nn.functional.gelu(proj))
+        out = self.LN(output)
+        return out/out.norm(p=2, dim=-1, keepdim=True)
 
 
 # Model
