@@ -27,7 +27,7 @@ class CustomTrainer(Trainer):
         text_loss = torch.nn.functional.cross_entropy(logits_per_text, torch.arange(len(logits_per_text), device=logits_per_text.device))
         vision_loss = torch.nn.functional.cross_entropy(logits_per_text.T, torch.arange(len(logits_per_text), device=logits_per_text.device))
         # Return average
-        return (.5*(text_loss+vision_loss), outputs) if return_outputs else .5*(text_loss+vision_loss)
+        return (.5*(text_loss+vision_loss), logits_per_text) if return_outputs else .5*(text_loss+vision_loss)
 
 
 #
